@@ -9,7 +9,6 @@
     - Login/Sigup (With Cookies)
     - Posting and set timeout time
     - Replying to posts
-    - Following
 
 ## Cycle 2
 - Decentralized authentication
