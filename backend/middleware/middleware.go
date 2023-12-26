@@ -1,10 +1,14 @@
 package middleware
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/yong1le/thomp/models"
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -12,26 +16,34 @@ import (
 
 func CheckAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonWriter := json.NewEncoder(w)
+
+		// Load env variables
+		region := os.Getenv("AWS_REGION")
+		userPoolID := os.Getenv("AWS_USER_POOL_ID")
+		appClientID := os.Getenv("AWS_APP_CLIENT_ID")
 
 		// Split JWT: bearer $token
 		authHeader := r.Header.Get("Authorization")
 		splitAuthHeader := strings.Split(authHeader, " ")
 		if len(splitAuthHeader) != 2 {
 			// JWT not in right form, client's error
-			http.Error(w, "Missing or invalid authorization header", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			jsonWriter.Encode(models.JsonError{
+				Error: "Missing or invalid authorization header.",
+			})
 			return
 		}
 
 		// Get Public Key
-		region := os.Getenv("AWS_REGION")
-		userPoolID := os.Getenv("AWS_USER_POOL_ID")
 		pubKeyURL := fmt.Sprintf(
 			"https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json",
 			region, userPoolID)
 		set, err := jwk.Fetch(r.Context(), pubKeyURL)
 		if err != nil {
 			// Problem fetching JWK, server's error
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			jsonWriter.Encode(models.JsonError{Error: err.Error()})
 			return
 		}
 
@@ -41,13 +53,28 @@ func CheckAuthentication(next http.Handler) http.Handler {
 			jwt.WithKeySet(set),
 			jwt.WithValidate(true))
 		if err != nil {
-			// Problem validating token, server's error
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			// Invalid token, client's error
+			w.WriteHeader(http.StatusBadRequest)
+			jsonWriter.Encode(models.JsonError{Error: err.Error()})
 			return
 		}
 
-		fmt.Print(token)
+		// Verify the claims of the token
+		clientID, ok1 := token.Get("client_id")
+		tokenUse, ok2 := token.Get("token_use")
+		issuer, ok3 := token.Get("iss")
+		correctISS := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", region, userPoolID)
+		if !ok1 || !ok2 || !ok3 || clientID != appClientID || tokenUse != "access" || issuer != correctISS {
+			w.WriteHeader(http.StatusUnauthorized)
+			jsonWriter.Encode(models.JsonError{
+				Error: "Failed to verify the claims of authorization token.",
+			})
+			return
+		}
 
-		next.ServeHTTP(w, r)
+    // Store username for use in handlers
+    username, _ := token.Get("username")
+    ctx := context.WithValue(r.Context(), "username", username)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

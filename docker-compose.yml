@@ -5,6 +5,7 @@ services:
     environment:
       - AWS_REGION=${AWS_REGION}
       - AWS_USER_POOL_ID=${AWS_USER_POOL_ID}
+      - AWS_APP_CLIENT_ID=${AWS_APP_CLIENT_ID}
       - FRONTEND_URL=${FRONTEND_URL}
       - PORT=8000
     ports:

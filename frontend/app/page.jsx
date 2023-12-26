@@ -4,7 +4,9 @@ import { fetchAuthSession } from "aws-amplify/auth";
 
 async function getAccessToken() {
   try {
-    const { accessToken } = (await fetchAuthSession()).tokens ?? {};
+    const { idToken, accessToken } = (await fetchAuthSession()).tokens ?? {};
+    console.log("id", idToken);
+    console.log("access", accessToken);
     return accessToken.toString();
   } catch (err) {
     console.log(err);

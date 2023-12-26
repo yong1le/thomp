@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/yong1le/thomp/middleware"
+	"github.com/yong1le/thomp/models"
 	"github.com/yong1le/thomp/routes"
 )
 
@@ -32,14 +34,14 @@ func main() {
 		r.Route("/activity", routes.ActivitiesRouter)
 		r.Route("/message", routes.MessagesRouter)
     r.Get("/", func (w http.ResponseWriter, r *http.Request) {
-      fmt.Println("Hello World")
+      w.WriteHeader(http.StatusOK)
+      json.NewEncoder(w).Encode(models.JsonError{Error: r.Context().Value("username").(string)})
     })
 	})
 
 	port := fmt.Sprintf("%s%s", ":", os.Getenv("PORT"))
-  fmt.Println(port)
 	err := http.ListenAndServe(port, r)
   if err != nil {
-    fmt.Print(err)
+    fmt.Println(err)
   }
 }
