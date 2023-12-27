@@ -10,16 +10,16 @@ const SignInPage = () => {
   const username = useRef(null);
   const password = useRef(null);
 
-  async function handleSignIn(username, password) {
+  async function handleSignIn() {
     try {
       const { nextStep } = await signIn({
-        username,
-        password,
+        username: username.current.value,
+        password: password.current.value,
       });
 
       if (nextStep.signInStep === "CONFIRM_SIGN_UP") {
-        sessionStorage.setItem("username", username);
-        push("/registration/confirmation");
+        sessionStorage.setItem("username", username.current.value);
+        push("/registration/confirm");
       } else if (nextStep.signInStep === "DONE") {
         push("/");
       }
@@ -34,7 +34,7 @@ const SignInPage = () => {
         className="flex flex-col"
         onSubmit={async (e) => {
           e.preventDefault();
-          await handleSignIn(username.current.value, password.current.value);
+          await handleSignIn();
         }}
       >
         <h2 className="text-2xl self-center mb-4">Welcome Back</h2>

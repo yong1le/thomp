@@ -11,36 +11,56 @@ const ConfirmPage = () => {
   useEffect(() => {
     if (!sessionStorage.getItem("username")) {
       push("/");
+      return;
     }
-  }, []);
+  }, [push]);
 
   const tag = useRef(null);
   const confirmation = useRef(null);
+  const name = useRef(null);
 
   const [resendEnabled, setResendEnabled] = useState(true);
   const [countDown, setCountdown] = useState(60);
 
-  async function handleSignUpConfirmation(confirmationCode) {
+  async function handleSignUpConfirmation() {
     const username = sessionStorage.getItem("username");
     try {
-      const { userId, nextStep } = await confirmSignUp({
+      // Create the user in the database first, if this doesn't work,
+      // we don't go and confirm
+      const user = await createUserInDB(username, name.current.value);
+
+      const { nextStep } = await confirmSignUp({
         username,
-        confirmationCode,
+        confirmationCode: confirmation.current.value,
       });
 
       if (
         nextStep.signUpStep === "DONE" ||
         nextStep.signUpStep === "COMPLETE_AUTO_SIGN_IN"
       ) {
-        // TODO: Store information in db
         sessionStorage.removeItem("username");
         await autoSignIn();
         push("/");
       }
     } catch (e) {
-      sessionStorage.removeItem("username");
+      // TODO: catch different types of errors
       console.log(e);
     }
+  }
+
+  async function createUserInDB(username, name) {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/registration`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          username: username,
+          name: name,
+        }),
+      },
+    );
+    const json = await response.json();
+    return json;
   }
 
   async function resendConfirmationCode() {
@@ -77,8 +97,15 @@ const ConfirmPage = () => {
         }}
       >
         <h2 className="text-2xl self-center mb-4" ref={tag}>
-          Confirmation Code
+          Please provide your name
         </h2>
+        <input
+          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          type="text"
+          name="name"
+          ref={name}
+          placeholder="Name"
+        />
         <input
           className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
           type="text"

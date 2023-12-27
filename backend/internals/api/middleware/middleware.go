@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/yong1le/thomp/models"
+	"github.com/yong1le/thomp/backend/internals/api/models"
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -72,9 +72,9 @@ func CheckAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-    // Store username for use in handlers
-    username, _ := token.Get("username")
-    ctx := context.WithValue(r.Context(), "username", username)
+		// Store username for use in handlers
+		username, _ := token.Get("username")
+		ctx := context.WithValue(r.Context(), "username", username)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

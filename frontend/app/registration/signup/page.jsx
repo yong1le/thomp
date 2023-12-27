@@ -7,25 +7,25 @@ import { useRouter } from "next/navigation";
 export default function SignUpPage() {
   const { push } = useRouter();
 
-  const handle = useRef(null);
+  const username = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
 
   // Returns true if signup finished, false
-  async function handleSignUp(username, email, password) {
+  async function handleSignUp() {
     try {
       const { nextStep } = await signUp({
-        username,
-        password,
+        username: username.current.value,
+        password: password.current.value,
         options: {
           userAttributes: {
-            email,
+            email: email.current.value,
           },
           autoSignIn: true,
         },
       });
       if (nextStep.signUpStep === "CONFIRM_SIGN_UP") {
-        sessionStorage.setItem("username", username);
+        sessionStorage.setItem("username", username.current.value);
         push("/registration/confirm");
       } else if (nextStep.signUpStep === "DONE") {
         await autoSignIn({});
@@ -42,28 +42,27 @@ export default function SignUpPage() {
         className="flex flex-col"
         onSubmit={async (e) => {
           e.preventDefault();
-          await handleSignUp(
-            handle.current.value,
-            email.current.value,
-            password.current.value,
-          );
+          await handleSignUp();
         }}
       >
         <h2 className="text-2xl self-center mb-4">Join Today</h2>
+
+        <input
+          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          type="text"
+          name="username"
+          ref={username}
+          placeholder="Username"
+          required
+        />
+
         <input
           className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
           type="email"
           name="email"
           ref={email}
           placeholder="Email"
-        />
-
-        <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
-          type="text"
-          name="handle"
-          ref={handle}
-          placeholder="Username"
+          required
         />
 
         <input
@@ -72,6 +71,7 @@ export default function SignUpPage() {
           name="password"
           ref={password}
           placeholder="Password"
+          required
         />
 
         <input
