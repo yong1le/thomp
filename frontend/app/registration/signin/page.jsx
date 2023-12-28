@@ -3,6 +3,7 @@
 import { signIn } from "aws-amplify/auth";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const SignInPage = () => {
   const { push } = useRouter();
@@ -24,7 +25,7 @@ const SignInPage = () => {
         push("/");
       }
     } catch (e) {
-      console.log(e);
+      alert(e.message);
     }
   }
 
@@ -57,6 +58,12 @@ const SignInPage = () => {
           type="submit"
           value="Sign In"
         />
+        <Link
+          href="/registration/signup"
+          className="mt-3 text-sm self-center text-gray-400"
+        >
+          New? Create an account.
+        </Link>
       </form>
     </div>
   );

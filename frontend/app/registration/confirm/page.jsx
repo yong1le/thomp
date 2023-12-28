@@ -10,7 +10,7 @@ const ConfirmPage = () => {
   const { push } = useRouter();
   useEffect(() => {
     if (!sessionStorage.getItem("username")) {
-      push("/");
+      push("/home");
       return;
     }
   }, [push]);
@@ -24,11 +24,22 @@ const ConfirmPage = () => {
 
   async function handleSignUpConfirmation() {
     const username = sessionStorage.getItem("username");
+    if (!username) {
+      alert("Failed to retreive username from previous step");
+      push("/registration/signin");
+      return;
+    }
+
+    const { ok, json } = await createUserInDB(username, name.current.value);
+    if (!ok) {
+      alert(json.error);
+      return;
+    }
+
     try {
       // Create the user in the database first, if this doesn't work,
-      // we don't go and confirm
-      const user = await createUserInDB(username, name.current.value);
-
+      // we don't go and confirm, the user would have to signin using their
+      // credentials and confirm again
       const { nextStep } = await confirmSignUp({
         username,
         confirmationCode: confirmation.current.value,
@@ -40,27 +51,39 @@ const ConfirmPage = () => {
       ) {
         sessionStorage.removeItem("username");
         await autoSignIn();
-        push("/");
+        push("/home");
       }
     } catch (e) {
-      // TODO: catch different types of errors
-      console.log(e);
+      if (e.name === "AutoSignInException") {
+        push("/registration/signin");
+        return;
+      }
+      alert(e.message);
     }
   }
 
+  // The endpoint returns the newly created user object. We are not interested
+  // in this. We only want to know whether the response was ok.
   async function createUserInDB(username, name) {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/registration`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          username: username,
-          name: name,
-        }),
-      },
-    );
-    const json = await response.json();
-    return json;
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/registration`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            username: username,
+            name: name,
+          }),
+        },
+      );
+      const ok = response.ok;
+      const json = await response.json();
+
+      return { ok, json };
+    } catch (e) {
+      console.log(e);
+      return { ok: null, json: { error: e.message } };
+    }
   }
 
   async function resendConfirmationCode() {
@@ -93,7 +116,7 @@ const ConfirmPage = () => {
         className="flex flex-col"
         onSubmit={async (e) => {
           e.preventDefault();
-          await handleSignUpConfirmation(confirmation.current.value);
+          await handleSignUpConfirmation();
         }}
       >
         <h2 className="text-2xl self-center mb-4" ref={tag}>

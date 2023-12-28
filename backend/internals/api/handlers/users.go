@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/yong1le/thomp/backend/internals/api/models"
+	"github.com/yong1le/thomp/backend/internals/api/lib"
 	"github.com/yong1le/thomp/backend/internals/sqlc"
 )
 
@@ -19,10 +19,7 @@ func (handler *Handlers) CreateUserHandler(w http.ResponseWriter, r *http.Reques
 	body := parameters{}
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.JsonError{
-			Error: fmt.Sprintf("Error parsing JSON body: %s", err),
-		})
+		lib.SendJsonError(w, http.StatusBadRequest, fmt.Sprintf("Error parsing JSON body: %s", err))
 		return
 	}
 
@@ -33,15 +30,11 @@ func (handler *Handlers) CreateUserHandler(w http.ResponseWriter, r *http.Reques
 		AvatarUrl:   "Placeholder",
 	})
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.JsonError{
-			Error: fmt.Sprintf("Error creating user: %s", err),
-		})
+		lib.SendJsonError(w, http.StatusBadRequest, fmt.Sprintf("Error creating user: %s", err))
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newUser)
+	lib.SendJsonResponse(w, http.StatusCreated, newUser)
 }
 
 func (handler *Handlers) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {}

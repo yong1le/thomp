@@ -7,7 +7,6 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,12 +19,12 @@ RETURNING id, author_id, message, head_activity_id, expires_at, created_at
 `
 
 type CreateActivityParams struct {
-	ID             uuid.UUID
-	AuthorID       sql.NullString
-	Message        string
-	HeadActivityID uuid.NullUUID
-	ExpiresAt      time.Time
-	CreatedAt      time.Time
+	ID             uuid.UUID     `json:"id"`
+	AuthorID       string        `json:"author_id"`
+	Message        string        `json:"message"`
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	CreatedAt      time.Time     `json:"created_at"`
 }
 
 func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) (Activity, error) {
@@ -61,6 +60,7 @@ func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) error {
 
 const getExpiringActivities = `-- name: GetExpiringActivities :many
 SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
+WHERE head_activity_id IS NULL
 ORDER BY expires_at
 LIMIT $1
 `
@@ -95,9 +95,47 @@ func (q *Queries) GetExpiringActivities(ctx context.Context, limit int32) ([]Act
 	return items, nil
 }
 
+const getFollowingActivities = `-- name: GetFollowingActivities :many
+SELECT (activities.id, author_id, message, expires_at, created_at)
+FROM activities JOIN relationships
+ON author_id=followed_id
+WHERE follower_id=$1 AND head_activity_id IS NULL
+ORDER BY created_At DESC
+LIMIT $2
+`
+
+type GetFollowingActivitiesParams struct {
+	FollowerID string `json:"follower_id"`
+	Limit      int32  `json:"limit"`
+}
+
+func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingActivitiesParams) ([]interface{}, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowingActivities, arg.FollowerID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []interface{}
+	for rows.Next() {
+		var column_1 interface{}
+		if err := rows.Scan(&column_1); err != nil {
+			return nil, err
+		}
+		items = append(items, column_1)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecentActivities = `-- name: GetRecentActivities :many
 SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
-ORDER BY created_at
+WHERE head_activity_id IS NULL
+ORDER BY created_at DESC
 LIMIT $1
 `
 
@@ -158,8 +196,8 @@ LIMIT $2
 `
 
 type GetThreadParams struct {
-	HeadActivityID uuid.NullUUID
-	Limit          int32
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	Limit          int32         `json:"limit"`
 }
 
 func (q *Queries) GetThread(ctx context.Context, arg GetThreadParams) ([]Activity, error) {

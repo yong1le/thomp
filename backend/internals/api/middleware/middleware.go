@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/yong1le/thomp/backend/internals/api/models"
+	"github.com/yong1le/thomp/backend/internals/api/lib"
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -16,7 +15,6 @@ import (
 
 func CheckAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		jsonWriter := json.NewEncoder(w)
 
 		// Load env variables
 		region := os.Getenv("AWS_REGION")
@@ -28,10 +26,7 @@ func CheckAuthentication(next http.Handler) http.Handler {
 		splitAuthHeader := strings.Split(authHeader, " ")
 		if len(splitAuthHeader) != 2 {
 			// JWT not in right form, client's error
-			w.WriteHeader(http.StatusBadRequest)
-			jsonWriter.Encode(models.JsonError{
-				Error: "Missing or invalid authorization header.",
-			})
+			lib.SendJsonError(w, http.StatusBadRequest, "Missing or invalid authorization header.")
 			return
 		}
 
@@ -42,8 +37,7 @@ func CheckAuthentication(next http.Handler) http.Handler {
 		set, err := jwk.Fetch(r.Context(), pubKeyURL)
 		if err != nil {
 			// Problem fetching JWK, server's error
-			w.WriteHeader(http.StatusInternalServerError)
-			jsonWriter.Encode(models.JsonError{Error: err.Error()})
+			lib.SendJsonError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -54,8 +48,7 @@ func CheckAuthentication(next http.Handler) http.Handler {
 			jwt.WithValidate(true))
 		if err != nil {
 			// Invalid token, client's error
-			w.WriteHeader(http.StatusBadRequest)
-			jsonWriter.Encode(models.JsonError{Error: err.Error()})
+			lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -65,10 +58,7 @@ func CheckAuthentication(next http.Handler) http.Handler {
 		issuer, ok3 := token.Get("iss")
 		correctISS := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", region, userPoolID)
 		if !ok1 || !ok2 || !ok3 || clientID != appClientID || tokenUse != "access" || issuer != correctISS {
-			w.WriteHeader(http.StatusUnauthorized)
-			jsonWriter.Encode(models.JsonError{
-				Error: "Failed to verify the claims of authorization token.",
-			})
+			lib.SendJsonError(w, http.StatusBadRequest, "Failed to verify the claims of authorization token.")
 			return
 		}
 

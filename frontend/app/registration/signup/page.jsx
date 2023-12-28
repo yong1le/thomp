@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { autoSignIn, signUp } from "aws-amplify/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignUpPage() {
   const { push } = useRouter();
@@ -27,12 +28,19 @@ export default function SignUpPage() {
       if (nextStep.signUpStep === "CONFIRM_SIGN_UP") {
         sessionStorage.setItem("username", username.current.value);
         push("/registration/confirm");
-      } else if (nextStep.signUpStep === "DONE") {
-        await autoSignIn({});
-        push("/");
+      } else if (
+        nextStep.signUpStep === "DONE" ||
+        nextStep.signUpStep === "COMPLETE_AUTO_SIGN_IN"
+      ) {
+        await autoSignIn();
+        push("/home");
       }
     } catch (e) {
-      console.log(e);
+      if (e.name === "AutoSignInException") {
+        push("/registration/signin");
+        return;
+      }
+      alert(e.message);
     }
   }
 
@@ -79,6 +87,12 @@ export default function SignUpPage() {
           type="submit"
           value="Create New Account"
         />
+        <Link
+          href="/registration/signin"
+          className="mt-3 text-sm self-center text-gray-400"
+        >
+          Have an account? Sign in.
+        </Link>
       </form>
     </div>
   );

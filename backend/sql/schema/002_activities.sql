@@ -2,7 +2,7 @@
 
 CREATE TABLE activities (
   id UUID PRIMARY KEY,
-  author_id VARCHAR(255) REFERENCES users(id),
+  author_id VARCHAR(255) REFERENCES users(id) NOT NULL,
   message TEXT NOT NULL,
   head_activity_id UUID REFERENCES activities(id),
   expires_at TIMESTAMP NOT NULL,

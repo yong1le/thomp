@@ -5,37 +5,36 @@
 package sqlc
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Activity struct {
-	ID             uuid.UUID
-	AuthorID       sql.NullString
-	Message        string
-	HeadActivityID uuid.NullUUID
-	ExpiresAt      time.Time
-	CreatedAt      time.Time
+	ID             uuid.UUID     `json:"id"`
+	AuthorID       string        `json:"author_id"`
+	Message        string        `json:"message"`
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	CreatedAt      time.Time     `json:"created_at"`
 }
 
 type Message struct {
-	ID         uuid.UUID
-	SenderID   sql.NullString
-	ReceiverID sql.NullString
-	Message    sql.NullString
-	CreateAt   sql.NullTime
+	ID         uuid.UUID `json:"id"`
+	SenderID   string    `json:"sender_id"`
+	ReceiverID string    `json:"receiver_id"`
+	Message    string    `json:"message"`
+	CreateAt   time.Time `json:"create_at"`
 }
 
 type Relationship struct {
-	ID         uuid.UUID
-	FollowedID sql.NullString
-	FollowerID sql.NullString
+	ID         uuid.UUID `json:"id"`
+	FollowedID string    `json:"followed_id"`
+	FollowerID string    `json:"follower_id"`
 }
 
 type User struct {
-	ID          string
-	DisplayName string
-	AvatarUrl   string
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	AvatarUrl   string `json:"avatar_url"`
 }

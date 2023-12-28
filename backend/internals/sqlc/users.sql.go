@@ -16,9 +16,9 @@ RETURNING id, display_name, avatar_url
 `
 
 type CreateUserParams struct {
-	ID          string
-	DisplayName string
-	AvatarUrl   string
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	AvatarUrl   string `json:"avatar_url"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -36,8 +36,8 @@ RETURNING id, display_name, avatar_url
 `
 
 type UpdateAvatarParams struct {
-	ID        string
-	AvatarUrl string
+	ID        string `json:"id"`
+	AvatarUrl string `json:"avatar_url"`
 }
 
 func (q *Queries) UpdateAvatar(ctx context.Context, arg UpdateAvatarParams) (User, error) {
@@ -55,8 +55,8 @@ RETURNING id, display_name, avatar_url
 `
 
 type UpdateDisplayNameParams struct {
-	ID          string
-	DisplayName string
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
 }
 
 func (q *Queries) UpdateDisplayName(ctx context.Context, arg UpdateDisplayNameParams) (User, error) {

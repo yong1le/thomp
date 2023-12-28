@@ -6,3 +6,4 @@ sql:
     gen:
       go:
         out: "internals/sqlc"
+        emit_json_tags: true

@@ -1,27 +1,27 @@
 "use client";
-import { fetchAuthSession } from "aws-amplify/auth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { getAccessToken } from "../lib/token";
 
 const AuthenticationCheck = () => {
   const { push } = useRouter();
   const path = usePathname();
 
   useEffect(() => {
-    async function checkLogin() {
-      try {
-        const { accessToken } = (await fetchAuthSession()).tokens ?? {};
-        if (!accessToken) {
+    getAccessToken().then((authenticated) => {
+      if (path.match("/registration/.*")) {
+        if (authenticated) {
+          push("/home");
+        }
+      } else {
+        if (!authenticated) {
           push("/registration/signin");
         }
-      } catch (err) {
-        console.log(err);
+        if (path === "/") {
+          push("/home");
+        }
       }
-    }
-
-    if (!path.match("/registration/.*")) {
-      checkLogin();
-    }
+    });
   }, [push, path]);
   return <></>;
 };
