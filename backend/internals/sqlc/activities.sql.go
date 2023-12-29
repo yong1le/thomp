@@ -59,7 +59,7 @@ func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) error {
 }
 
 const getFollowingActivities = `-- name: GetFollowingActivities :many
-SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 JOIN relationships ON author_id = followed_id
@@ -74,13 +74,12 @@ type GetFollowingActivitiesParams struct {
 }
 
 type GetFollowingActivitiesRow struct {
-	ID             uuid.UUID     `json:"id"`
-	AvatarUrl      string        `json:"avatar_url"`
-	DisplayName    string        `json:"display_name"`
-	Message        string        `json:"message"`
-	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
-	ExpiresAt      time.Time     `json:"expires_at"`
-	CreatedAt      time.Time     `json:"created_at"`
+	ID          uuid.UUID `json:"id"`
+	AvatarUrl   string    `json:"avatar_url"`
+	DisplayName string    `json:"display_name"`
+	Message     string    `json:"message"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingActivitiesParams) ([]GetFollowingActivitiesRow, error) {
@@ -97,7 +96,6 @@ func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingAc
 			&i.AvatarUrl,
 			&i.DisplayName,
 			&i.Message,
-			&i.HeadActivityID,
 			&i.ExpiresAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -115,7 +113,7 @@ func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingAc
 }
 
 const getRecentActivities = `-- name: GetRecentActivities :many
-SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 WHERE head_activity_id IS NULL
@@ -124,13 +122,12 @@ LIMIT $1
 `
 
 type GetRecentActivitiesRow struct {
-	ID             uuid.UUID     `json:"id"`
-	AvatarUrl      string        `json:"avatar_url"`
-	DisplayName    string        `json:"display_name"`
-	Message        string        `json:"message"`
-	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
-	ExpiresAt      time.Time     `json:"expires_at"`
-	CreatedAt      time.Time     `json:"created_at"`
+	ID          uuid.UUID `json:"id"`
+	AvatarUrl   string    `json:"avatar_url"`
+	DisplayName string    `json:"display_name"`
+	Message     string    `json:"message"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRecentActivitiesRow, error) {
@@ -147,7 +144,59 @@ func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRe
 			&i.AvatarUrl,
 			&i.DisplayName,
 			&i.Message,
-			&i.HeadActivityID,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getReplies = `-- name: GetReplies :many
+SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
+FROM users JOIN activities
+ON users.id = activities.author_id
+WHERE head_activity_id=$1
+ORDER BY created_at DESC
+LIMIT $2
+`
+
+type GetRepliesParams struct {
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	Limit          int32         `json:"limit"`
+}
+
+type GetRepliesRow struct {
+	ID          uuid.UUID `json:"id"`
+	AvatarUrl   string    `json:"avatar_url"`
+	DisplayName string    `json:"display_name"`
+	Message     string    `json:"message"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetReplies(ctx context.Context, arg GetRepliesParams) ([]GetRepliesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplies, arg.HeadActivityID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRepliesRow
+	for rows.Next() {
+		var i GetRepliesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AvatarUrl,
+			&i.DisplayName,
+			&i.Message,
 			&i.ExpiresAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -165,7 +214,7 @@ func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRe
 }
 
 const getSingleActivity = `-- name: GetSingleActivity :one
-SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+SELECT activities.id, avatar_url, display_name, head_activity_id, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 WHERE activities.id=$1
@@ -175,8 +224,8 @@ type GetSingleActivityRow struct {
 	ID             uuid.UUID     `json:"id"`
 	AvatarUrl      string        `json:"avatar_url"`
 	DisplayName    string        `json:"display_name"`
-	Message        string        `json:"message"`
 	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	Message        string        `json:"message"`
 	ExpiresAt      time.Time     `json:"expires_at"`
 	CreatedAt      time.Time     `json:"created_at"`
 }
@@ -188,52 +237,10 @@ func (q *Queries) GetSingleActivity(ctx context.Context, id uuid.UUID) (GetSingl
 		&i.ID,
 		&i.AvatarUrl,
 		&i.DisplayName,
-		&i.Message,
 		&i.HeadActivityID,
+		&i.Message,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 	)
 	return i, err
-}
-
-const getThread = `-- name: GetThread :many
-SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
-WHERE head_activity_id=$1
-ORDER BY created_at
-LIMIT $2
-`
-
-type GetThreadParams struct {
-	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
-	Limit          int32         `json:"limit"`
-}
-
-func (q *Queries) GetThread(ctx context.Context, arg GetThreadParams) ([]Activity, error) {
-	rows, err := q.db.QueryContext(ctx, getThread, arg.HeadActivityID, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Activity
-	for rows.Next() {
-		var i Activity
-		if err := rows.Scan(
-			&i.ID,
-			&i.AuthorID,
-			&i.Message,
-			&i.HeadActivityID,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

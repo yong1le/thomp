@@ -20,6 +20,8 @@ func SetupRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Get("/single/{id}", h.OneActivityHandler)
 		r.Post("/create", h.CreateActivityHandler)
 		r.Delete("/delete/{id}", h.DeleteActivityHandler)
+		r.Post("/reply/create", h.CreateReplyHandler)
+		r.Get("/replies/{id}/{limit}", h.GetRepliesHandler)
 	})
 
 	r.Route("/message", func(r chi.Router) {

@@ -1,10 +1,11 @@
 "use client";
 import Activity from "@/app/components/Activity";
+import ReplySection from "@/app/components/ReplySection";
 import { getAccessToken } from "@/app/lib/session";
 import { useEffect, useState } from "react";
 
 const PostPage = ({ params }) => {
-  const [activity, setActivity] = useState({});
+  const [activity, setActivity] = useState(null);
 
   async function getActivity(id) {
     const token = await getAccessToken();
@@ -27,11 +28,12 @@ const PostPage = ({ params }) => {
       const json = await res.json();
       if (!ok) {
         console.log(json.error);
-        return {};
+        return null;
       }
       return json;
     } catch (e) {
       console.log(e);
+      return null;
     }
   }
 
@@ -43,16 +45,19 @@ const PostPage = ({ params }) => {
   }, [params.id]);
 
   return (
-    <div>
-      <Activity
-        id={activity.id}
-        avatarUrl={activity.avatar_url}
-        displayName={activity.display_name}
-        message={activity.message}
-        expiresAt={activity.expires_at}
-        createdAt={activity.created_at}
-      />
-      {/* Comments Section */}
+    <div className="flex flex-col gap-3">
+      {activity && (
+        <Activity
+          id={activity.id}
+          avatarUrl={activity.avatar_url}
+          displayName={activity.display_name}
+          message={activity.message}
+          expiresAt={activity.expires_at}
+          createdAt={activity.created_at}
+        />
+      )}
+      <h1 className="text-3xl self-center">Comments</h1>
+      <ReplySection id={params.id} />
     </div>
   );
 };
