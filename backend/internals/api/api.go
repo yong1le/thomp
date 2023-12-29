@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/yong1le/thomp/backend/internals/api/handlers"
+	"github.com/yong1le/thomp/backend/internals/api/middleware"
 	"github.com/yong1le/thomp/backend/internals/api/routes"
 )
 
@@ -25,6 +26,7 @@ func NewServer(h *handlers.Handlers) *Server {
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	}))
+	r.Use(middleware.CheckAuthentication)
 
 	routes.SetupRoutes(r, h)
 

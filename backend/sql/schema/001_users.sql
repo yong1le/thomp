@@ -1,7 +1,8 @@
 -- +goose Up
 
 CREATE TABLE users (
-  id VARCHAR(255) PRIMARY KEY,
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  username VARCHAR(255) NOT NULL UNIQUE,
   display_name VARCHAR(255) NOT NULL,
   avatar_url TEXT NOT NULL
 );

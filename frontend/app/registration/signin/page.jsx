@@ -1,31 +1,28 @@
 "use client";
 
-import { signIn } from "aws-amplify/auth";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const SignInPage = () => {
-  const { push } = useRouter();
+  const { refresh } = useRouter();
 
-  const username = useRef(null);
+  const email = useRef(null);
   const password = useRef(null);
 
   async function handleSignIn() {
-    try {
-      const { nextStep } = await signIn({
-        username: username.current.value,
-        password: password.current.value,
-      });
+    const supabase = createClientComponentClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.current.value,
+      password: password.current.value,
+    });
 
-      if (nextStep.signInStep === "CONFIRM_SIGN_UP") {
-        sessionStorage.setItem("username", username.current.value);
-        push("/registration/confirm");
-      } else if (nextStep.signInStep === "DONE") {
-        push("/");
-      }
-    } catch (e) {
-      alert(e.message);
+    if (error) {
+      console.log(error);
+    } else {
+      console.log(data);
+      refresh();
     }
   }
 
@@ -41,10 +38,10 @@ const SignInPage = () => {
         <h2 className="text-2xl self-center mb-4">Welcome Back</h2>
         <input
           className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
-          type="text"
-          name="username"
-          ref={username}
-          placeholder="Username"
+          type="email"
+          name="email"
+          ref={email}
+          placeholder="Email"
         />
         <input
           className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"

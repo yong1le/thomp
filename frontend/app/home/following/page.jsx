@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import Activity from "../../components/Activity";
 import Editor from "../../components/Editor";
-import { getAccessToken } from "../../lib/token";
+import { getAccessToken } from "@/app/lib/session";
 
-const HomeFeed = () => {
+const FollowingFeed = () => {
   const [posts, setPosts] = useState([]);
 
   async function getPosts() {
@@ -38,10 +38,9 @@ const HomeFeed = () => {
   }
 
   // Each element has the form
-  // {id, author_id, message, head_activity_id, expires_at, created_at}
+  // {id, avatar_url, displayName, message, head_activity_id, expires_at, created_at}
   useEffect(() => {
     getPosts().then((json) => {
-      console.log(json);
       setPosts(json);
     });
   }, []);
@@ -58,7 +57,8 @@ const HomeFeed = () => {
             <Activity
               key={i}
               id={e.id}
-              authorId={e.author_id}
+              avatarUrl={e.avatar_url}
+              displayName={e.display_name}
               message={e.message}
               expiresAt={e.expires_at}
               createdAt={e.created_at}
@@ -69,4 +69,4 @@ const HomeFeed = () => {
   );
 };
 
-export default HomeFeed;
+export default FollowingFeed;

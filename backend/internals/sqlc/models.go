@@ -12,7 +12,7 @@ import (
 
 type Activity struct {
 	ID             uuid.UUID     `json:"id"`
-	AuthorID       string        `json:"author_id"`
+	AuthorID       uuid.UUID     `json:"author_id"`
 	Message        string        `json:"message"`
 	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
 	ExpiresAt      time.Time     `json:"expires_at"`
@@ -21,20 +21,21 @@ type Activity struct {
 
 type Message struct {
 	ID         uuid.UUID `json:"id"`
-	SenderID   string    `json:"sender_id"`
-	ReceiverID string    `json:"receiver_id"`
+	SenderID   uuid.UUID `json:"sender_id"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
 	Message    string    `json:"message"`
 	CreateAt   time.Time `json:"create_at"`
 }
 
 type Relationship struct {
 	ID         uuid.UUID `json:"id"`
-	FollowedID string    `json:"followed_id"`
-	FollowerID string    `json:"follower_id"`
+	FollowedID uuid.UUID `json:"followed_id"`
+	FollowerID uuid.UUID `json:"follower_id"`
 }
 
 type User struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"display_name"`
-	AvatarUrl   string `json:"avatar_url"`
+	ID          uuid.UUID `json:"id"`
+	Username    string    `json:"username"`
+	DisplayName string    `json:"display_name"`
+	AvatarUrl   string    `json:"avatar_url"`
 }

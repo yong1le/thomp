@@ -1,7 +1,7 @@
 "use client";
 import Activity from "@/app/components/Activity";
-import { getAccessToken } from "@/app/lib/token";
-import React, { useEffect, useState } from "react";
+import { getAccessToken } from "@/app/lib/session";
+import { useEffect, useState } from "react";
 
 const PostPage = ({ params }) => {
   const [activity, setActivity] = useState({});
@@ -26,16 +26,16 @@ const PostPage = ({ params }) => {
       const ok = res.ok;
       const json = await res.json();
       if (!ok) {
-        alert(json.error);
+        console.log(json.error);
         return {};
       }
       return json;
     } catch (e) {
-      alert(e);
+      console.log(e);
     }
   }
 
-  // {id, author_id, message, head_activity_id, expires_at, created_at}
+  // {id, avatar_url, displayName, message, head_activity_id, expires_at, created_at}
   useEffect(() => {
     getActivity(params.id).then((json) => {
       setActivity(json);
@@ -46,7 +46,8 @@ const PostPage = ({ params }) => {
     <div>
       <Activity
         id={activity.id}
-        authorId={activity.author_id}
+        avatarUrl={activity.avatar_url}
+        displayName={activity.display_name}
         message={activity.message}
         expiresAt={activity.expires_at}
         createdAt={activity.created_at}

@@ -7,43 +7,31 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
-
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, display_name, avatar_url)
-VALUES ($1, $2, $3)
-RETURNING id, display_name, avatar_url
-`
-
-type CreateUserParams struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"display_name"`
-	AvatarUrl   string `json:"avatar_url"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.DisplayName, arg.AvatarUrl)
-	var i User
-	err := row.Scan(&i.ID, &i.DisplayName, &i.AvatarUrl)
-	return i, err
-}
 
 const updateAvatar = `-- name: UpdateAvatar :one
 UPDATE users
 SET avatar_url = $2
 WHERE id = $1
-RETURNING id, display_name, avatar_url
+RETURNING id, username, display_name, avatar_url
 `
 
 type UpdateAvatarParams struct {
-	ID        string `json:"id"`
-	AvatarUrl string `json:"avatar_url"`
+	ID        uuid.UUID `json:"id"`
+	AvatarUrl string    `json:"avatar_url"`
 }
 
 func (q *Queries) UpdateAvatar(ctx context.Context, arg UpdateAvatarParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateAvatar, arg.ID, arg.AvatarUrl)
 	var i User
-	err := row.Scan(&i.ID, &i.DisplayName, &i.AvatarUrl)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.DisplayName,
+		&i.AvatarUrl,
+	)
 	return i, err
 }
 
@@ -51,17 +39,22 @@ const updateDisplayName = `-- name: UpdateDisplayName :one
 UPDATE users
 SET display_name=$2
 WHERE id=$1
-RETURNING id, display_name, avatar_url
+RETURNING id, username, display_name, avatar_url
 `
 
 type UpdateDisplayNameParams struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"display_name"`
+	ID          uuid.UUID `json:"id"`
+	DisplayName string    `json:"display_name"`
 }
 
 func (q *Queries) UpdateDisplayName(ctx context.Context, arg UpdateDisplayNameParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateDisplayName, arg.ID, arg.DisplayName)
 	var i User
-	err := row.Scan(&i.ID, &i.DisplayName, &i.AvatarUrl)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.DisplayName,
+		&i.AvatarUrl,
+	)
 	return i, err
 }

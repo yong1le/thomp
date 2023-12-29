@@ -20,7 +20,7 @@ RETURNING id, author_id, message, head_activity_id, expires_at, created_at
 
 type CreateActivityParams struct {
 	ID             uuid.UUID     `json:"id"`
-	AuthorID       string        `json:"author_id"`
+	AuthorID       uuid.UUID     `json:"author_id"`
 	Message        string        `json:"message"`
 	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
 	ExpiresAt      time.Time     `json:"expires_at"`
@@ -58,25 +58,44 @@ func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getExpiringActivities = `-- name: GetExpiringActivities :many
-SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
-WHERE head_activity_id IS NULL
-ORDER BY expires_at
-LIMIT $1
+const getFollowingActivities = `-- name: GetFollowingActivities :many
+SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+FROM users JOIN activities
+ON users.id = activities.author_id
+JOIN relationships ON author_id = followed_id
+WHERE follower_id=$1 AND head_activity_id IS NULL
+ORDER BY created_At DESC
+LIMIT $2
 `
 
-func (q *Queries) GetExpiringActivities(ctx context.Context, limit int32) ([]Activity, error) {
-	rows, err := q.db.QueryContext(ctx, getExpiringActivities, limit)
+type GetFollowingActivitiesParams struct {
+	FollowerID uuid.UUID `json:"follower_id"`
+	Limit      int32     `json:"limit"`
+}
+
+type GetFollowingActivitiesRow struct {
+	ID             uuid.UUID     `json:"id"`
+	AvatarUrl      string        `json:"avatar_url"`
+	DisplayName    string        `json:"display_name"`
+	Message        string        `json:"message"`
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+}
+
+func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingActivitiesParams) ([]GetFollowingActivitiesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowingActivities, arg.FollowerID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Activity
+	var items []GetFollowingActivitiesRow
 	for rows.Next() {
-		var i Activity
+		var i GetFollowingActivitiesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.AuthorID,
+			&i.AvatarUrl,
+			&i.DisplayName,
 			&i.Message,
 			&i.HeadActivityID,
 			&i.ExpiresAt,
@@ -95,62 +114,38 @@ func (q *Queries) GetExpiringActivities(ctx context.Context, limit int32) ([]Act
 	return items, nil
 }
 
-const getFollowingActivities = `-- name: GetFollowingActivities :many
-SELECT (activities.id, author_id, message, expires_at, created_at)
-FROM activities JOIN relationships
-ON author_id=followed_id
-WHERE follower_id=$1 AND head_activity_id IS NULL
-ORDER BY created_At DESC
-LIMIT $2
-`
-
-type GetFollowingActivitiesParams struct {
-	FollowerID string `json:"follower_id"`
-	Limit      int32  `json:"limit"`
-}
-
-func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingActivitiesParams) ([]interface{}, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowingActivities, arg.FollowerID, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []interface{}
-	for rows.Next() {
-		var column_1 interface{}
-		if err := rows.Scan(&column_1); err != nil {
-			return nil, err
-		}
-		items = append(items, column_1)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getRecentActivities = `-- name: GetRecentActivities :many
-SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
+SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+FROM users JOIN activities
+ON users.id = activities.author_id
 WHERE head_activity_id IS NULL
 ORDER BY created_at DESC
 LIMIT $1
 `
 
-func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]Activity, error) {
+type GetRecentActivitiesRow struct {
+	ID             uuid.UUID     `json:"id"`
+	AvatarUrl      string        `json:"avatar_url"`
+	DisplayName    string        `json:"display_name"`
+	Message        string        `json:"message"`
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+}
+
+func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRecentActivitiesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getRecentActivities, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Activity
+	var items []GetRecentActivitiesRow
 	for rows.Next() {
-		var i Activity
+		var i GetRecentActivitiesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.AuthorID,
+			&i.AvatarUrl,
+			&i.DisplayName,
 			&i.Message,
 			&i.HeadActivityID,
 			&i.ExpiresAt,
@@ -170,16 +165,29 @@ func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]Activ
 }
 
 const getSingleActivity = `-- name: GetSingleActivity :one
-SELECT id, author_id, message, head_activity_id, expires_at, created_at FROM activities
-WHERE id=$1
+SELECT activities.id, avatar_url, display_name, message, head_activity_id, expires_at, created_at
+FROM users JOIN activities
+ON users.id = activities.author_id
+WHERE activities.id=$1
 `
 
-func (q *Queries) GetSingleActivity(ctx context.Context, id uuid.UUID) (Activity, error) {
+type GetSingleActivityRow struct {
+	ID             uuid.UUID     `json:"id"`
+	AvatarUrl      string        `json:"avatar_url"`
+	DisplayName    string        `json:"display_name"`
+	Message        string        `json:"message"`
+	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+}
+
+func (q *Queries) GetSingleActivity(ctx context.Context, id uuid.UUID) (GetSingleActivityRow, error) {
 	row := q.db.QueryRowContext(ctx, getSingleActivity, id)
-	var i Activity
+	var i GetSingleActivityRow
 	err := row.Scan(
 		&i.ID,
-		&i.AuthorID,
+		&i.AvatarUrl,
+		&i.DisplayName,
 		&i.Message,
 		&i.HeadActivityID,
 		&i.ExpiresAt,

@@ -57,14 +57,15 @@ func (handler *Handlers) GetFollowingRecentsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	username := r.Context().Value("username").(string)
-	if username == "" {
-		lib.SendJsonError(w, http.StatusInternalServerError, "Error getting user, please try again.")
+	idString := r.Context().Value("id").(string)
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	activities, err := handler.DB.GetFollowingActivities(r.Context(), sqlc.GetFollowingActivitiesParams{
-		FollowerID: username,
+		FollowerID: id,
 		Limit:      int32(limit),
 	})
 	if err != nil {
@@ -94,14 +95,16 @@ func (handler *Handlers) CreateActivityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	authorID := r.Context().Value("username").(string)
-	if authorID == "" {
-		lib.SendJsonError(w, http.StatusInternalServerError, "Error getting user, please try again.")
+	idString := r.Context().Value("id").(string)
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 	activity, err := handler.DB.CreateActivity(r.Context(), sqlc.CreateActivityParams{
 		ID:             uuid.New(),
-		AuthorID:       authorID,
+		AuthorID:       id,
 		HeadActivityID: uuid.NullUUID{Valid: false},
 		Message:        body.Message,
 		CreatedAt:      time.Now().UTC(),

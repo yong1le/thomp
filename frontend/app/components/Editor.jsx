@@ -1,14 +1,25 @@
 "use client";
 
-import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuX } from "react-icons/lu";
-import { getAccessToken } from "../lib/token";
+import AvatarWidget from "./AvatarWidget";
+import { getAccessToken, getAvatarUrl } from "../lib/session";
 
 const Editor = () => {
   const [isEditorVisible, setIsEditorVisible] = useState(false);
+  const [url, setUrl] = useState("/");
+
   const message = useRef(null);
   const expiresAt = useRef(null);
+
+  useEffect(() => {
+    getAvatarUrl().then((url) => {
+      if (!url) {
+        return;
+      }
+      setUrl(url);
+    });
+  });
 
   async function handleCreateActivity() {
     const token = await getAccessToken();
@@ -32,29 +43,23 @@ const Editor = () => {
       );
       const ok = response.ok;
       const json = await response.json();
+
       if (!ok) {
-        alert(json.error);
-      } else {
-        // reset default
-        message.current.value = "";
-        setIsEditorVisible(false);
+        console.log(json.error);
+        return;
       }
+
+      message.current.value = "";
+      setIsEditorVisible(false);
     } catch (e) {
-      alert(e);
+      console.log(e);
     }
   }
 
   return (
     <div>
       <div className="flex flex-row gap-2 p-3 md:text-xl rounded-xl border">
-        <div className="w-12 relative">
-          <Image
-            src="/amongus.jpeg"
-            fill={true}
-            alt="Profile Image"
-            className="rounded-3xl"
-          />
-        </div>
+        <AvatarWidget url={url} size={50} />
         <div
           className="py-2 px-3 bg-slate-100 w-full rounded-xl cursor-pointer whitespace-nowrap overflow-hidden"
           onClick={() => setIsEditorVisible(!isEditorVisible)}
@@ -85,7 +90,7 @@ const Editor = () => {
               </div>
             </div>
             <form
-              className="h-full"
+              className="h-full flex flex-col"
               onSubmit={async (e) => {
                 e.preventDefault();
                 await handleCreateActivity();
@@ -94,25 +99,28 @@ const Editor = () => {
               <textarea
                 name="message"
                 id="message"
-                className="w-full h-3/4 p-4 outline-none resize-none md:text-3xl"
+                className="h-2/3 w-full p-4 outline-none resize-none md:text-3xl"
                 placeholder="What's on your mind?"
                 required
                 ref={message}
               ></textarea>
-              <div className="flex flex-row justify-between px-3">
-                <select name="expiry" id="expiry" ref={expiresAt}>
-                  <option value="3">3 hours</option>
-                  <option value="6">6 hours</option>
-                  <option value="9">9 hours</option>
-                  <option value="12">12 hours</option>
-                  <option value="24">1 day</option>
-                  <option value="48">2 days</option>
-                  <option value="72">3 days</option>
-                </select>
+              <div className="flex flex-row justify-between items-center px-3">
+                <div>
+                  Expires in:
+                  <select name="expiry" id="expiry" ref={expiresAt}>
+                    <option value="3">3 hours</option>
+                    <option value="6">6 hours</option>
+                    <option value="9">9 hours</option>
+                    <option value="12">12 hours</option>
+                    <option value="24">1 day</option>
+                    <option value="48">2 days</option>
+                    <option value="72">3 days</option>
+                  </select>
+                </div>
                 <input
                   type="submit"
                   value="Create"
-                  className="cursor-pointer"
+                  className="cursor-pointer md:text-3xl"
                 />
               </div>
             </form>

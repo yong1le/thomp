@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Activity from "../components/Activity";
 import Editor from "../components/Editor";
-import { getAccessToken } from "../lib/token";
+import { getAccessToken } from "../lib/session";
 
 const HomeFeed = () => {
   const [posts, setPosts] = useState([]);
@@ -27,18 +27,18 @@ const HomeFeed = () => {
       const ok = res.ok;
       const json = await res.json();
       if (!ok) {
-        alert(json.error);
+        console.log(json.error);
         return [];
       }
       return json;
     } catch (e) {
-      alert(e);
+      console.log(e);
       return [];
     }
   }
 
   // Each element has the form
-  // {id, author_id, message, head_activity_id, expires_at, created_at}
+  // {id, avatar_url, display_name, message, head_activity_id, expires_at, created_at}
   useEffect(() => {
     getPosts().then((json) => {
       setPosts(json);
@@ -57,7 +57,8 @@ const HomeFeed = () => {
             <Activity
               key={i}
               id={e.id}
-              authorId={e.author_id}
+              avatarUrl={e.avatar_url}
+              displayName={e.display_name}
               message={e.message}
               expiresAt={e.expires_at}
               createdAt={e.created_at}
