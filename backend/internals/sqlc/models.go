@@ -28,7 +28,6 @@ type Message struct {
 }
 
 type Relationship struct {
-	ID         uuid.UUID `json:"id"`
 	FollowedID uuid.UUID `json:"followed_id"`
 	FollowerID uuid.UUID `json:"follower_id"`
 }

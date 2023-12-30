@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const SignInPage = () => {
-  const { refresh } = useRouter();
+  const { push, refresh } = useRouter();
 
   const email = useRef(null);
   const password = useRef(null);
@@ -21,7 +21,7 @@ const SignInPage = () => {
     if (error) {
       console.log(error);
     } else {
-      console.log(data);
+      push("/home");
       refresh();
     }
   }
@@ -35,29 +35,29 @@ const SignInPage = () => {
           await handleSignIn();
         }}
       >
-        <h2 className="text-2xl self-center mb-4">Welcome Back</h2>
+        <h2 className="mb-4 self-center text-2xl">Welcome Back</h2>
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="email"
           name="email"
           ref={email}
           placeholder="Email"
         />
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="password"
           name="password"
           ref={password}
           placeholder="Password"
         />
         <input
-          className="self-center cursor-pointer bg-gray-200 p-3 rounded"
+          className="cursor-pointer self-center rounded bg-gray-200 p-3"
           type="submit"
           value="Sign In"
         />
         <Link
           href="/registration/signup"
-          className="mt-3 text-sm self-center text-gray-400"
+          className="mt-3 self-center text-sm text-gray-400"
         >
           New? Create an account.
         </Link>

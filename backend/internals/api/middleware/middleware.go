@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	// "time"
 
 	"github.com/nedpals/supabase-go"
 	"github.com/yong1le/thomp/backend/internals/api/lib"
@@ -12,6 +13,8 @@ import (
 
 func CheckAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// time.Sleep(5 * time.Second)
 
 		// Split JWT: bearer $token
 		authHeader := r.Header.Get("Authorization")

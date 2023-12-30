@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -32,15 +31,25 @@ func (handler *Handlers) OneActivityHandler(w http.ResponseWriter, r *http.Reque
 	lib.SendJsonResponse(w, http.StatusOK, activity)
 }
 
-func (handler *Handlers) GetRecentsHandler(w http.ResponseWriter, r *http.Request) {
-	limitString := chi.URLParamFromCtx(r.Context(), "limit")
-	limit, err := strconv.Atoi(limitString)
+func (handler *Handlers) GetAllByUserHandler(w http.ResponseWriter, r *http.Request) {
+	idString := chi.URLParamFromCtx(r.Context(), "id")
+	id, err := uuid.Parse(idString)
 	if err != nil {
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	activities, err := handler.DB.GetRecentActivities(r.Context(), int32(limit))
+	activities, err := handler.DB.GetPostsByUser(r.Context(), id)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	lib.SendJsonResponse(w, http.StatusOK, activities)
+}
+
+func (handler *Handlers) GetRecentsHandler(w http.ResponseWriter, r *http.Request) {
+	activities, err := handler.DB.GetRecentActivities(r.Context())
 	if err != nil {
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
@@ -50,13 +59,6 @@ func (handler *Handlers) GetRecentsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (handler *Handlers) GetFollowingRecentsHandler(w http.ResponseWriter, r *http.Request) {
-	limitString := chi.URLParamFromCtx(r.Context(), "limit")
-	limit, err := strconv.Atoi(limitString)
-	if err != nil {
-		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	idString := r.Context().Value("id").(string)
 	id, err := uuid.Parse(idString)
 	if err != nil {
@@ -64,10 +66,7 @@ func (handler *Handlers) GetFollowingRecentsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	activities, err := handler.DB.GetFollowingActivities(r.Context(), sqlc.GetFollowingActivitiesParams{
-		FollowerID: id,
-		Limit:      int32(limit),
-	})
+	activities, err := handler.DB.GetFollowingActivities(r.Context(), id)
 	if err != nil {
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
@@ -118,7 +117,42 @@ func (handler *Handlers) CreateActivityHandler(w http.ResponseWriter, r *http.Re
 	lib.SendJsonResponse(w, http.StatusCreated, activity)
 }
 
-func (handler *Handlers) DeleteActivityHandler(w http.ResponseWriter, r *http.Request) {}
+func (handler *Handlers) DeleteActivityHandler(w http.ResponseWriter, r *http.Request) {
+	activityIDString := chi.URLParamFromCtx(r.Context(), "id")
+	activityID, err := uuid.Parse(activityIDString)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, fmt.Sprintf("ActivityID: %s", err))
+		return
+	}
+
+	// Before deleting the activity, we need to make sure that the user is the author of
+	// that activity
+	activity, err := handler.DB.GetSingleActivity(r.Context(), activityID)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userIDString := r.Context().Value("id").(string)
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, fmt.Sprintf("UserID: %s", err))
+		return
+	}
+
+	if userID != activity.AuthorID {
+		lib.SendJsonError(w, http.StatusUnauthorized, "Not your activity.")
+		return
+	}
+
+	deletedActivity, err := handler.DB.DeleteActivity(r.Context(), activityID)
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	lib.SendJsonResponse(w, http.StatusAccepted, deletedActivity)
+}
 
 func (handler *Handlers) CreateReplyHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -182,7 +216,6 @@ func (handler *Handlers) CreateReplyHandler(w http.ResponseWriter, r *http.Reque
 
 func (handler *Handlers) GetRepliesHandler(w http.ResponseWriter, r *http.Request) {
 	headActivityIDString := chi.URLParamFromCtx(r.Context(), "id")
-	limitString := chi.URLParamFromCtx(r.Context(), "limit")
 
 	// Convert string to UUID
 	headActivityID, err := uuid.Parse(headActivityIDString)
@@ -190,20 +223,12 @@ func (handler *Handlers) GetRepliesHandler(w http.ResponseWriter, r *http.Reques
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	limit, err := strconv.Atoi(limitString)
+
+	replies, err := handler.DB.GetReplies(r.Context(), uuid.NullUUID{UUID: headActivityID, Valid: true})
 	if err != nil {
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	replies, err := handler.DB.GetReplies(r.Context(), sqlc.GetRepliesParams{
-		HeadActivityID: uuid.NullUUID{UUID: headActivityID, Valid: true},
-		Limit:          int32(limit),
-	})
-	if err != nil {
-		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	lib.SendJsonResponse(w, http.StatusOK, replies);
+	lib.SendJsonResponse(w, http.StatusOK, replies)
 }

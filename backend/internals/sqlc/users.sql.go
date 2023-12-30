@@ -11,6 +11,25 @@ import (
 	"github.com/google/uuid"
 )
 
+const getUserDetails = `-- name: GetUserDetails :one
+SELECT username, display_name, avatar_url
+FROM users
+where id=$1
+`
+
+type GetUserDetailsRow struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+	AvatarUrl   string `json:"avatar_url"`
+}
+
+func (q *Queries) GetUserDetails(ctx context.Context, id uuid.UUID) (GetUserDetailsRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserDetails, id)
+	var i GetUserDetailsRow
+	err := row.Scan(&i.Username, &i.DisplayName, &i.AvatarUrl)
+	return i, err
+}
+
 const updateAvatar = `-- name: UpdateAvatar :one
 UPDATE users
 SET avatar_url = $2

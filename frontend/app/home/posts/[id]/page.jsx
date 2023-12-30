@@ -1,54 +1,26 @@
-"use client";
-import Activity from "@/app/components/Activity";
-import ReplySection from "@/app/components/ReplySection";
-import { getAccessToken } from "@/app/lib/session";
-import { useEffect, useState } from "react";
+"use server";
+import Activity from "@/app/components/Activity/Activity";
+import Reply from "@/app/components/Activity/Reply";
+import { fetchDataServer } from "@/app/lib/server";
 
-const PostPage = ({ params }) => {
-  const [activity, setActivity] = useState(null);
+async function getActivity(id) {
+  return await fetchDataServer(`/activity/single/${id}`, null);
+}
 
-  async function getActivity(id) {
-    const token = await getAccessToken();
-    if (!token) {
-      return;
-    }
+async function getReplies(id) {
+  return await fetchDataServer(`/activity/replies/${id}`, null);
+}
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/single/${id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `bearer ${token}`,
-          },
-        },
-      );
-
-      const ok = res.ok;
-      const json = await res.json();
-      if (!ok) {
-        console.log(json.error);
-        return null;
-      }
-      return json;
-    } catch (e) {
-      console.log(e);
-      return null;
-    }
-  }
-
-  // {id, avatar_url, displayName, message, head_activity_id, expires_at, created_at}
-  useEffect(() => {
-    getActivity(params.id).then((json) => {
-      setActivity(json);
-    });
-  }, [params.id]);
+const PostPage = async ({ params }) => {
+  const activity = await getActivity(params.id);
+  const replies = await getReplies(params.id);
 
   return (
     <div className="flex flex-col gap-3">
       {activity && (
         <Activity
           id={activity.id}
+          authorId={activity.author_id}
           avatarUrl={activity.avatar_url}
           displayName={activity.display_name}
           message={activity.message}
@@ -56,8 +28,20 @@ const PostPage = ({ params }) => {
           createdAt={activity.created_at}
         />
       )}
-      <h1 className="text-3xl self-center">Comments</h1>
-      <ReplySection id={params.id} />
+      <h1 className="self-center text-3xl">Comments</h1>
+      <div>
+        {replies &&
+          replies.map((e, i) => (
+            <Reply
+              key={i}
+              id={e.id}
+              avatarUrl={e.avatar_url}
+              displayName={e.display_name}
+              message={e.message}
+              createdAt={e.created_at}
+            />
+          ))}
+      </div>
     </div>
   );
 };

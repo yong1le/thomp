@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function SignUpPage() {
-  const { push } = useRouter();
+  const { push, refresh } = useRouter();
 
   const name = useRef(null);
   const username = useRef(null);
@@ -32,6 +32,7 @@ export default function SignUpPage() {
       console.log(error);
     } else {
       push("/registration/signin");
+      refresh();
     }
   }
 
@@ -44,10 +45,10 @@ export default function SignUpPage() {
           await handleSignUp();
         }}
       >
-        <h2 className="text-2xl self-center mb-4">Join Today</h2>
+        <h2 className="mb-4 self-center text-2xl">Join Today</h2>
 
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="text"
           name="name"
           ref={name}
@@ -56,7 +57,7 @@ export default function SignUpPage() {
         />
 
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="text"
           name="username"
           ref={username}
@@ -65,7 +66,7 @@ export default function SignUpPage() {
         />
 
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="email"
           name="email"
           ref={email}
@@ -74,7 +75,7 @@ export default function SignUpPage() {
         />
 
         <input
-          className="text-lg mb-4 py-2 px-3 border border-gray-300 rounded"
+          className="mb-4 rounded border border-gray-300 px-3 py-2 text-lg"
           type="password"
           name="password"
           ref={password}
@@ -83,13 +84,13 @@ export default function SignUpPage() {
         />
 
         <input
-          className="self-center cursor-pointer bg-gray-200 p-3 rounded"
+          className="cursor-pointer self-center rounded bg-gray-200 p-3"
           type="submit"
           value="Create New Account"
         />
         <Link
           href="/registration/signin"
-          className="mt-3 text-sm self-center text-gray-400"
+          className="mt-3 self-center text-sm text-gray-400"
         >
           Have an account? Sign in.
         </Link>

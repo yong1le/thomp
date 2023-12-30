@@ -1,3 +1,8 @@
+-- name: GetUserDetails :one
+SELECT username, display_name, avatar_url
+FROM users
+where id=$1;
+
 -- name: UpdateAvatar :one
 UPDATE users
 SET avatar_url = $2

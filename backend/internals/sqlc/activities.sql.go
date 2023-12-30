@@ -48,33 +48,38 @@ func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) 
 	return i, err
 }
 
-const deleteActivity = `-- name: DeleteActivity :exec
+const deleteActivity = `-- name: DeleteActivity :one
 DELETE FROM activities
 WHERE id=$1
+RETURNING id, author_id, message, head_activity_id, expires_at, created_at
 `
 
-func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteActivity, id)
-	return err
+func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) (Activity, error) {
+	row := q.db.QueryRowContext(ctx, deleteActivity, id)
+	var i Activity
+	err := row.Scan(
+		&i.ID,
+		&i.AuthorID,
+		&i.Message,
+		&i.HeadActivityID,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getFollowingActivities = `-- name: GetFollowingActivities :many
-SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
+SELECT activities.id, author_id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 JOIN relationships ON author_id = followed_id
 WHERE follower_id=$1 AND head_activity_id IS NULL
 ORDER BY created_At DESC
-LIMIT $2
 `
-
-type GetFollowingActivitiesParams struct {
-	FollowerID uuid.UUID `json:"follower_id"`
-	Limit      int32     `json:"limit"`
-}
 
 type GetFollowingActivitiesRow struct {
 	ID          uuid.UUID `json:"id"`
+	AuthorID    uuid.UUID `json:"author_id"`
 	AvatarUrl   string    `json:"avatar_url"`
 	DisplayName string    `json:"display_name"`
 	Message     string    `json:"message"`
@@ -82,8 +87,8 @@ type GetFollowingActivitiesRow struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingActivitiesParams) ([]GetFollowingActivitiesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowingActivities, arg.FollowerID, arg.Limit)
+func (q *Queries) GetFollowingActivities(ctx context.Context, followerID uuid.UUID) ([]GetFollowingActivitiesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowingActivities, followerID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +98,56 @@ func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingAc
 		var i GetFollowingActivitiesRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.AuthorID,
+			&i.AvatarUrl,
+			&i.DisplayName,
+			&i.Message,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPostsByUser = `-- name: GetPostsByUser :many
+SELECT activities.id, author_id, avatar_url, display_name, message, expires_at, created_at
+FROM users JOIN activities
+ON users.id=activities.author_id
+WHERE author_id=$1 AND head_activity_id IS NULL
+ORDER BY created_at DESC
+`
+
+type GetPostsByUserRow struct {
+	ID          uuid.UUID `json:"id"`
+	AuthorID    uuid.UUID `json:"author_id"`
+	AvatarUrl   string    `json:"avatar_url"`
+	DisplayName string    `json:"display_name"`
+	Message     string    `json:"message"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetPostsByUser(ctx context.Context, authorID uuid.UUID) ([]GetPostsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsByUser, authorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPostsByUserRow
+	for rows.Next() {
+		var i GetPostsByUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
 			&i.AvatarUrl,
 			&i.DisplayName,
 			&i.Message,
@@ -113,16 +168,16 @@ func (q *Queries) GetFollowingActivities(ctx context.Context, arg GetFollowingAc
 }
 
 const getRecentActivities = `-- name: GetRecentActivities :many
-SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
+SELECT activities.id, author_id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 WHERE head_activity_id IS NULL
 ORDER BY created_at DESC
-LIMIT $1
 `
 
 type GetRecentActivitiesRow struct {
 	ID          uuid.UUID `json:"id"`
+	AuthorID    uuid.UUID `json:"author_id"`
 	AvatarUrl   string    `json:"avatar_url"`
 	DisplayName string    `json:"display_name"`
 	Message     string    `json:"message"`
@@ -130,8 +185,8 @@ type GetRecentActivitiesRow struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRecentActivitiesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentActivities, limit)
+func (q *Queries) GetRecentActivities(ctx context.Context) ([]GetRecentActivitiesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentActivities)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +196,7 @@ func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRe
 		var i GetRecentActivitiesRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.AuthorID,
 			&i.AvatarUrl,
 			&i.DisplayName,
 			&i.Message,
@@ -161,21 +217,16 @@ func (q *Queries) GetRecentActivities(ctx context.Context, limit int32) ([]GetRe
 }
 
 const getReplies = `-- name: GetReplies :many
-SELECT activities.id, avatar_url, display_name, message, expires_at, created_at
+SELECT activities.id, author_id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 WHERE head_activity_id=$1
 ORDER BY created_at DESC
-LIMIT $2
 `
-
-type GetRepliesParams struct {
-	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
-	Limit          int32         `json:"limit"`
-}
 
 type GetRepliesRow struct {
 	ID          uuid.UUID `json:"id"`
+	AuthorID    uuid.UUID `json:"author_id"`
 	AvatarUrl   string    `json:"avatar_url"`
 	DisplayName string    `json:"display_name"`
 	Message     string    `json:"message"`
@@ -183,8 +234,8 @@ type GetRepliesRow struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (q *Queries) GetReplies(ctx context.Context, arg GetRepliesParams) ([]GetRepliesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplies, arg.HeadActivityID, arg.Limit)
+func (q *Queries) GetReplies(ctx context.Context, headActivityID uuid.NullUUID) ([]GetRepliesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplies, headActivityID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +245,7 @@ func (q *Queries) GetReplies(ctx context.Context, arg GetRepliesParams) ([]GetRe
 		var i GetRepliesRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.AuthorID,
 			&i.AvatarUrl,
 			&i.DisplayName,
 			&i.Message,
@@ -214,7 +266,7 @@ func (q *Queries) GetReplies(ctx context.Context, arg GetRepliesParams) ([]GetRe
 }
 
 const getSingleActivity = `-- name: GetSingleActivity :one
-SELECT activities.id, avatar_url, display_name, head_activity_id, message, expires_at, created_at
+SELECT activities.id, author_id, avatar_url, display_name, head_activity_id, message, expires_at, created_at
 FROM users JOIN activities
 ON users.id = activities.author_id
 WHERE activities.id=$1
@@ -222,6 +274,7 @@ WHERE activities.id=$1
 
 type GetSingleActivityRow struct {
 	ID             uuid.UUID     `json:"id"`
+	AuthorID       uuid.UUID     `json:"author_id"`
 	AvatarUrl      string        `json:"avatar_url"`
 	DisplayName    string        `json:"display_name"`
 	HeadActivityID uuid.NullUUID `json:"head_activity_id"`
@@ -235,6 +288,7 @@ func (q *Queries) GetSingleActivity(ctx context.Context, id uuid.UUID) (GetSingl
 	var i GetSingleActivityRow
 	err := row.Scan(
 		&i.ID,
+		&i.AuthorID,
 		&i.AvatarUrl,
 		&i.DisplayName,
 		&i.HeadActivityID,
