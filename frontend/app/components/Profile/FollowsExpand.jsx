@@ -119,7 +119,7 @@ const FollowsExpand = ({
               {fetching ? (
                 <Loader size={15} color={"#4d7c0f"} />
               ) : (
-                <>Unfollow</>
+                <>Follow</>
               )}
             </button>
           )}
