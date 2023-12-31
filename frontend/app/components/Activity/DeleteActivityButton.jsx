@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LuTrash } from "react-icons/lu";
 import Popup from "../Utils/Popup";
 import Loader from "../Utils/Loader";
+import { toast } from "react-toastify";
 
 const DeleteActivityButton = ({ id }) => {
   const { refresh } = useRouter();
@@ -17,13 +18,15 @@ const DeleteActivityButton = ({ id }) => {
     try {
       const res = await fetch(`/api/post?id=${id}`, { method: "DELETE" });
       if (!res.ok) {
-        console.log(await res.text());
+        toast.error(await res.text());
         return;
       }
+
       setConfirmationVisible(false);
       refresh();
+      toast.success("Deleted");
     } catch (e) {
-      console.log(e);
+      toast.error(e.message);
     } finally {
       setFetching(false);
     }

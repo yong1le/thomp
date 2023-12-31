@@ -6,6 +6,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import Loader from "../Utils/Loader";
 import { LuCheck, LuUpload } from "react-icons/lu";
+import { toast } from "react-toastify";
 
 const EditProfileExpand = ({
   userId,
@@ -25,6 +26,9 @@ const EditProfileExpand = ({
 
   async function uploadAvatar(supabase) {
     if (!avatarUrl.current.files || avatarUrl.current.files.length === 0) {
+      if (uploaded) {
+        throw new Error("Failed to update image.");
+      }
       return userAvatarUrl;
     }
 
@@ -37,13 +41,14 @@ const EditProfileExpand = ({
       .upload(filePath, file);
 
     if (error) {
-      throw error;
+      throw new Error(error.message);
     }
 
     return filePath;
   }
 
   async function handleProfileChange() {
+    toast({e: 'hello'})
     setFetching(true);
     const supabase = createClientComponentClient();
 
@@ -52,7 +57,7 @@ const EditProfileExpand = ({
       newAvatarUrl = await uploadAvatar(supabase);
     } catch (e) {
       setFetching(false);
-      console.log(e);
+      toast.error(e.message);
       return;
     }
 
@@ -64,7 +69,7 @@ const EditProfileExpand = ({
       },
     });
     if (error) {
-      console.log(error);
+      toast.error(error.message);
       setFetching(false);
       return;
     }
@@ -72,6 +77,7 @@ const EditProfileExpand = ({
     setFetching(false);
     setEditorVisible(false);
     refresh();
+    toast.success("Saved!")
   }
   return (
     <div className="w-full">

@@ -19,11 +19,11 @@ func main() {
 		log.Fatal("Database failed to connect: ", err)
 	}
 
-  // Save the queries object so it can be used in our handlers
-  h := handlers.NewHandlers(queries)
+	// Save the queries object so it can be used in our handlers
+	h := handlers.NewHandlers(queries)
 
 	// Server Setup
-  server := api.NewServer(h)
+	server := api.NewServer(h)
 	err = server.Run()
 	if err != nil {
 		log.Fatal("Server failed to run: ", err)

@@ -3,9 +3,11 @@ import { useRef, useState } from "react";
 import Popup from "../Utils/Popup";
 import { useRouter } from "next/navigation";
 import Loader from "../Utils/Loader";
+import { toast } from "react-toastify";
 
 const EditorExpand = () => {
   const { refresh } = useRouter();
+
   const [isEditorVisible, setIsEditorVisible] = useState(false);
   const [fetching, setFetching] = useState(false);
 
@@ -23,14 +25,16 @@ const EditorExpand = () => {
       );
 
       if (!res.ok) {
-        console.log(await res.text());
+        toast.error(await res.text());
         return;
       }
+
       message.current.value = "";
       refresh();
       setIsEditorVisible(false);
+      toast.success("Created");
     } catch (e) {
-      console.log(e);
+      toast.error(e.message);
     } finally {
       setFetching(false);
     }
@@ -49,7 +53,7 @@ const EditorExpand = () => {
       {isEditorVisible && (
         <Popup title="Create Post" closeFunction={setIsEditorVisible}>
           <form
-            className="flex h-[400px] md:h-[300px] w-[250px] flex-col items-center sm:w-[350px] md:w-[500px]"
+            className="flex h-[400px] w-[250px] flex-col items-center sm:w-[350px] md:h-[300px] md:w-[500px]"
             id="createActivity"
             onSubmit={async (e) => {
               if (fetching) return;
@@ -91,7 +95,7 @@ const EditorExpand = () => {
               <button
                 type="submit"
                 form="createActivity"
-                className="min-w-[100px] cursor-pointer rounded bg-blue-100 p-2 hover:bg-blue-200 md:text-xl transition-all"
+                className="min-w-[100px] cursor-pointer rounded bg-blue-100 p-2 transition-all hover:bg-blue-200 md:text-xl"
               >
                 {fetching ? <Loader size={15} color="#3182ce" /> : <>Create</>}
               </button>

@@ -146,13 +146,6 @@ func (handler *Handlers) DeleteActivityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// If the activity is a head activity, we need to delete its replies
-	err = handler.DB.DeleteReplies(r.Context(), uuid.NullUUID{UUID: activityID, Valid: true})
-	if err != nil {
-		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	deletedActivity, err := handler.DB.DeleteActivity(r.Context(), activityID)
 	if err != nil {
 		lib.SendJsonError(w, http.StatusBadRequest, err.Error())

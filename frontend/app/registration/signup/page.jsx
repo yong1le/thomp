@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Loader from "@/app/components/Utils/Loader";
+import { toast } from "react-toastify";
 
 export default function SignUpPage() {
   const { push, refresh } = useRouter();
@@ -33,10 +34,11 @@ export default function SignUpPage() {
     });
 
     if (error) {
-      console.log(error);
+      toast.error(error.message)
     } else {
       push("/registration/signin");
       refresh();
+      toast.success("Signed Up")
     }
     setFetching(false);
   }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Popup from "../Utils/Popup";
 import User from "./User";
 import Loader from "../Utils/Loader";
+import { toast } from "react-toastify";
 
 // has elements of user: id, username, display_name, avatar_url
 const FollowsExpand = ({
@@ -34,14 +35,14 @@ const FollowsExpand = ({
       });
 
       if (!res.ok) {
-        console.log(await res.text());
+        toast.error(await res.text());
         return;
       }
 
       setIsFollowedState(true);
       setFollowerCount((prev) => prev + 1);
     } catch (e) {
-      console.log(e);
+      toast.error(e.message);
     } finally {
       setFetching(false);
     }
@@ -55,14 +56,14 @@ const FollowsExpand = ({
       });
 
       if (!res.ok) {
-        console.log(await res.text());
+        toast.error(await res.text());
         return;
       }
 
       setIsFollowedState(false);
       setFollowerCount((prev) => prev - 1);
     } catch (e) {
-      console.log(e);
+      toast.error(e.message);
     } finally {
       setFetching(false);
     }
@@ -116,11 +117,7 @@ const FollowsExpand = ({
                 await handleFollow();
               }}
             >
-              {fetching ? (
-                <Loader size={15} color={"#4d7c0f"} />
-              ) : (
-                <>Follow</>
-              )}
+              {fetching ? <Loader size={15} color={"#4d7c0f"} /> : <>Follow</>}
             </button>
           )}
         </div>
@@ -134,7 +131,7 @@ const FollowsExpand = ({
           }
         >
           {followersVisible && followers && (
-            <div class="flex-col flex mb-3">
+            <div class="mb-3 flex flex-col">
               {followers.map((e, i) => (
                 <User
                   key={i}
@@ -157,7 +154,7 @@ const FollowsExpand = ({
           )}
 
           {followingVisible && following && (
-            <div class="flex-col flex p-2">
+            <div class="flex flex-col p-2">
               {following.map((e, i) => (
                 <User
                   key={i}

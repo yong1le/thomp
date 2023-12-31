@@ -8,10 +8,6 @@ DELETE FROM activities
 WHERE id=$1
 RETURNING *;
 
--- name: DeleteReplies :exec
-DELETE FROM activities
-WHERE head_activity_id=$1 AND head_activity_id IS NOT NULL;
-
 -- name: GetSingleActivity :one
 SELECT activities.id, author_id, avatar_url, display_name, head_activity_id, message, expires_at, created_at
 FROM users JOIN activities

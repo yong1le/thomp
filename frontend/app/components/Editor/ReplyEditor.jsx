@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { LuArrowLeft } from "react-icons/lu";
 import Loader from "../Utils/Loader";
+import { toast } from "react-toastify";
 
 const ReplyEditor = ({ id, expanded }) => {
   const { refresh } = useRouter();
@@ -12,7 +13,6 @@ const ReplyEditor = ({ id, expanded }) => {
   const [fetching, setFetching] = useState(false);
 
   async function handleCreateReply() {
-    console.log(reply.current);
     try {
       setFetching(true);
       const res = await fetch(
@@ -23,14 +23,15 @@ const ReplyEditor = ({ id, expanded }) => {
       );
 
       if (!res.ok) {
-        console.log(await res.text());
+        toast.error(await res.text());
         return;
       }
 
       reply.current.value = "";
+      toast.success("Replied!");
       refresh();
     } catch (e) {
-      console.log(e);
+      toast.error(e.message);
     } finally {
       setFetching(false);
     }

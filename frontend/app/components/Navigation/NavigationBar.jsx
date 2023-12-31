@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getIdClient } from "../../lib/client";
+import { toast } from "react-toastify";
 
 const NavigationBar = () => {
   const { push, refresh } = useRouter();
@@ -22,10 +23,11 @@ const NavigationBar = () => {
     const supabase = createClientComponentClient();
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.log(error);
+      toast.error(error.message);
     } else {
       push("/registration/signin");
       refresh();
+      toast.success("See you again ~");
     }
   }
 
@@ -61,13 +63,13 @@ const NavigationBar = () => {
         >
           Following
         </NavigationItem>
-        <NavigationItem
-          href="/home"
-          Icon={LuMessagesSquare}
-          isMedium={isMedium}
-        >
-          Messages
-        </NavigationItem>
+        {/* <NavigationItem */}
+        {/*   href="/home" */}
+        {/*   Icon={LuMessagesSquare} */}
+        {/*   isMedium={isMedium} */}
+        {/* > */}
+        {/*   Messages */}
+        {/* </NavigationItem> */}
       </ul>
       <ul className="flex flex-col gap-20 md:mt-60 md:gap-10">
         <NavigationItem

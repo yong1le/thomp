@@ -68,16 +68,6 @@ func (q *Queries) DeleteActivity(ctx context.Context, id uuid.UUID) (Activity, e
 	return i, err
 }
 
-const deleteReplies = `-- name: DeleteReplies :exec
-DELETE FROM activities
-WHERE head_activity_id=$1 AND head_activity_id IS NOT NULL
-`
-
-func (q *Queries) DeleteReplies(ctx context.Context, headActivityID uuid.NullUUID) error {
-	_, err := q.db.ExecContext(ctx, deleteReplies, headActivityID)
-	return err
-}
-
 const getFollowingActivities = `-- name: GetFollowingActivities :many
 SELECT activities.id, author_id, avatar_url, display_name, message, expires_at, created_at
 FROM users JOIN activities

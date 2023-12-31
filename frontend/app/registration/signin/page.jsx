@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Loader from "@/app/components/Utils/Loader";
+import { toast } from "react-toastify";
 
 const SignInPage = () => {
   const { push, refresh } = useRouter();
@@ -22,10 +23,11 @@ const SignInPage = () => {
     });
 
     if (error) {
-      console.log(error);
+      toast.error(error.message);
     } else {
       push("/home");
       refresh();
+      toast.success("Signed In")
     }
     setFetching(false);
   }
@@ -62,7 +64,9 @@ const SignInPage = () => {
         >
           {fetching ? <Loader size={15} color="#3182ce" /> : <>Sign In</>}
         </button>
-        <p className="text-sm self-center mt-3 text-slate-500">Demo: demo@gmail.com {" "} Demo123!</p>
+        <p className="mt-3 self-center text-sm text-slate-500">
+          Demo: demo@gmail.com Demo123!
+        </p>
         <hr className="my-3" />
         <Link
           href="/registration/signup"

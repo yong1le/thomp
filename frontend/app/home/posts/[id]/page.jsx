@@ -14,7 +14,6 @@ async function getReplies(id) {
 const PostPage = async ({ params }) => {
   const activity = await getActivity(params.id);
   const replies = await getReplies(params.id);
-  console.log(replies)
 
   return (
     <div className="flex flex-col gap-3">
