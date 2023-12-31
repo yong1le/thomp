@@ -15,12 +15,12 @@ const ReplyEditor = ({ id, expanded }) => {
   async function handleCreateReply() {
     try {
       setFetching(true);
-      const res = await fetch(
-        `/api/reply?id=${id}&message=${reply.current.value}`,
-        {
-          method: "POST",
-        },
-      );
+      const res = await fetch(`/api/reply?id=${id}`, {
+        method: "POST",
+        body: JSON.stringify({
+          message: reply.current.value,
+        }),
+      });
 
       if (!res.ok) {
         toast.error(await res.text());

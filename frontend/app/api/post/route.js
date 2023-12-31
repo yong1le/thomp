@@ -11,8 +11,9 @@ export async function POST(req) {
 
   try {
     const params = req.nextUrl.searchParams;
-    const message = params.get("message");
     const expiresAt = params.get("expiresAt");
+
+    const { message } = await req.json();
 
     const response = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/create`,

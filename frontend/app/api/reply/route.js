@@ -9,7 +9,8 @@ export async function POST(req) {
   try {
     const params = req.nextUrl.searchParams;
     const id = params.get("id");
-    const message = params.get("message");
+
+    const { message } = await req.json();
 
     const res = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/reply/create`,

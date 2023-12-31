@@ -18,9 +18,12 @@ const EditorExpand = () => {
     setFetching(true);
     try {
       const res = await fetch(
-        `/api/post?message=${message.current.value}&expiresAt=${expiresAt.current.value}`,
+        `/api/post?expiresAt=${expiresAt.current.value}`,
         {
           method: "POST",
+          body: JSON.stringify({
+            message: message.current.value,
+          }),
         },
       );
 
