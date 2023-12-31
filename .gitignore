@@ -38,3 +38,5 @@ next-env.d.ts
 tmp
 .env
 .env.local
+/backend/app.yaml
+/backend/app.yml
