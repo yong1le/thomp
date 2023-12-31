@@ -1,3 +1,4 @@
+import { fetchTimeout } from "@/app/lib/fetch";
 import { getAccessTokenRoute } from "@/app/lib/handler";
 
 export async function POST(req) {
@@ -13,7 +14,7 @@ export async function POST(req) {
     const message = params.get("message");
     const expiresAt = params.get("expiresAt");
 
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/create`,
       {
         method: "POST",
@@ -56,7 +57,7 @@ export async function DELETE(req) {
     const params = req.nextUrl.searchParams;
     const activityID = params.get("id");
 
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/delete/${activityID}`,
       {
         method: "DELETE",

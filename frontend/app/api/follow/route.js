@@ -1,3 +1,4 @@
+import { fetchTimeout } from "@/app/lib/fetch";
 import { getAccessTokenRoute } from "@/app/lib/handler";
 
 export async function POST(req) {
@@ -12,7 +13,7 @@ export async function POST(req) {
     const params = req.nextUrl.searchParams;
     const followedId = params.get("followedId");
 
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/add/${followedId}`,
       {
         method: "POST",
@@ -51,7 +52,7 @@ export async function DELETE(req) {
     const params = req.nextUrl.searchParams;
     const followedId = params.get("followedId");
 
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/delete/${followedId}`,
       {
         method: "DELETE",

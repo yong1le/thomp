@@ -1,3 +1,4 @@
+import { fetchTimeout } from "@/app/lib/fetch";
 import { getAccessTokenRoute } from "@/app/lib/handler";
 
 export async function POST(req) {
@@ -10,7 +11,7 @@ export async function POST(req) {
     const id = params.get("id");
     const message = params.get("message");
 
-    const res = await fetch(
+    const res = await fetchTimeout(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/activity/reply/create`,
       {
         method: "POST",

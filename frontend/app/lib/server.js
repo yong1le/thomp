@@ -6,6 +6,7 @@ import {
   getAvatarUrl,
   getId,
 } from "./interface";
+import { fetchTimeout } from "./fetch";
 
 export async function getAccessTokenServer() {
   const supabase = createServerComponentClient({ cookies: () => cookies() });
@@ -34,7 +35,7 @@ export async function fetchDataServer(path, error) {
   }
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, {
+    const res = await fetchTimeout(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, {
       method: "GET",
       headers: {
         Authorization: `bearer: ${token}`,
