@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Popup from "../Utils/Popup";
 import User from "./User";
+import Loader from "../Utils/Loader";
 
 // has elements of user: id, username, display_name, avatar_url
 const FollowsExpand = ({
@@ -18,6 +19,7 @@ const FollowsExpand = ({
   const [followingVisible, setFollowingVisible] = useState(false);
 
   const [isFollowedState, setIsFollowedState] = useState(isFollowed);
+  const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
     if (followers) setFollowerCount(followers.length);
@@ -25,6 +27,7 @@ const FollowsExpand = ({
   }, [followers, following]);
 
   async function handleFollow() {
+    setFetching(true);
     try {
       const res = await fetch(`/api/follow?followedId=${userId}`, {
         method: "POST",
@@ -39,10 +42,13 @@ const FollowsExpand = ({
       setFollowerCount((prev) => prev + 1);
     } catch (e) {
       console.log(e);
+    } finally {
+      setFetching(false);
     }
   }
 
   async function handleUnfollow() {
+    setFetching(true);
     try {
       const res = await fetch(`/api/follow?followedId=${userId}`, {
         method: "DELETE",
@@ -57,6 +63,8 @@ const FollowsExpand = ({
       setFollowerCount((prev) => prev - 1);
     } catch (e) {
       console.log(e);
+    } finally {
+      setFetching(false);
     }
   }
 
@@ -88,17 +96,31 @@ const FollowsExpand = ({
         <div className="mt-5">
           {isFollowedState ? (
             <button
-              className="w-full rounded-xl bg-red-200 p-1 transition-all hover:bg-red-300"
-              onClick={async () => await handleUnfollow()}
+              className="w-full rounded bg-red-200 p-1 transition-all hover:bg-red-300"
+              onClick={async () => {
+                if (fetching) return;
+                await handleUnfollow();
+              }}
             >
-              Unfollow
+              {fetching ? (
+                <Loader size={15} color={"#b91c1c"} />
+              ) : (
+                <>Unfollow</>
+              )}
             </button>
           ) : (
             <button
-              className="w-full rounded-xl bg-green-200 p-1 transition-all hover:bg-green-300"
-              onClick={async () => await handleFollow()}
+              className="w-full rounded bg-green-200 p-1 transition-all hover:bg-green-300"
+              onClick={async () => {
+                if (fetching) return;
+                await handleFollow();
+              }}
             >
-              Follow
+              {fetching ? (
+                <Loader size={15} color={"#4d7c0f"} />
+              ) : (
+                <>Unfollow</>
+              )}
             </button>
           )}
         </div>
@@ -112,7 +134,7 @@ const FollowsExpand = ({
           }
         >
           {followersVisible && followers && (
-            <div class="flex-rol flex">
+            <div class="flex-col flex mb-3">
               {followers.map((e, i) => (
                 <User
                   key={i}
@@ -135,7 +157,7 @@ const FollowsExpand = ({
           )}
 
           {followingVisible && following && (
-            <div class="flex-rol flex p-2">
+            <div class="flex-col flex p-2">
               {following.map((e, i) => (
                 <User
                   key={i}

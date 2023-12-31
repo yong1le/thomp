@@ -42,8 +42,6 @@ const ProfilePage = async ({ params }) => {
   const isSelf = id == params.id;
   const isFollowed = await getIsFollowed(id, params.id);
 
-  console.log(user);
-
   return (
     <div className="flex flex-col items-center justify-center gap-6">
       <div className="flex flex-col items-center gap-1">
@@ -60,7 +58,6 @@ const ProfilePage = async ({ params }) => {
         isSelf={isSelf}
         isFollowed={isFollowed}
       />
-      {/* TODO */}
       {isSelf && user.username && user.display_name && user.avatar_url && (
         <EditProfileExpand
           userId={params.id}

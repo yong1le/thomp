@@ -140,8 +140,16 @@ func (handler *Handlers) DeleteActivityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// We do the check here.
 	if userID != activity.AuthorID {
 		lib.SendJsonError(w, http.StatusUnauthorized, "Not your activity.")
+		return
+	}
+
+	// If the activity is a head activity, we need to delete its replies
+	err = handler.DB.DeleteReplies(r.Context(), uuid.NullUUID{UUID: activityID, Valid: true})
+	if err != nil {
+		lib.SendJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

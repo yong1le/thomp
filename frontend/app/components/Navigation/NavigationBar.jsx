@@ -4,8 +4,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import NavigationItem from "./NavigationItem";
 import {
   LuDoorOpen,
+  LuHome,
   LuMessagesSquare,
-  LuSkull,
   LuUserCircle2,
   LuUsers2,
 } from "react-icons/lu";
@@ -49,10 +49,10 @@ const NavigationBar = () => {
   }, []);
 
   return (
-    <div className="flex h-full flex-col justify-between py-10 ">
-      <ul className="flex flex-col gap-20 md:gap-10">
-        <NavigationItem href="/home" Icon={LuSkull} isMedium={isMedium}>
-          Thomp
+    <div className="flex h-full flex-col justify-between bg-gray-100 py-10">
+      <ul className="flex flex-col  gap-20 md:gap-10">
+        <NavigationItem href="/home" Icon={LuHome} isMedium={isMedium}>
+          Home
         </NavigationItem>
         <NavigationItem
           href="/home/following"
@@ -78,7 +78,7 @@ const NavigationBar = () => {
           Profile
         </NavigationItem>
         <li
-          className="hover:text-gray-600"
+          className="transition-all hover:text-slate-400"
           onClick={async () => await handleSignOut()}
         >
           {isMedium ? (

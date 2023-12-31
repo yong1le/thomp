@@ -1,9 +1,9 @@
 import { ClipLoader } from "react-spinners";
 
-const Loader = () => {
+const Loader = ({size, color}) => {
   return (
     <div className="self-center justify-self-center">
-      <ClipLoader size={100} loading={true} color={"#000000"} />
+      <ClipLoader size={size} loading={true} color={color} />
     </div>
   );
 };
