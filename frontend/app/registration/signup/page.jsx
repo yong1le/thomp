@@ -32,13 +32,13 @@ export default function SignUpPage() {
       },
     });
 
-    setFetching(false);
     if (error) {
       console.log(error);
     } else {
       push("/registration/signin");
       refresh();
     }
+    setFetching(false);
   }
 
   return (

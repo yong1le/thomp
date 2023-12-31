@@ -21,13 +21,13 @@ const SignInPage = () => {
       password: password.current.value,
     });
 
-    setFetching(false);
     if (error) {
       console.log(error);
     } else {
       push("/home");
       refresh();
     }
+    setFetching(false);
   }
 
   return (
@@ -62,6 +62,7 @@ const SignInPage = () => {
         >
           {fetching ? <Loader size={15} color="#3182ce" /> : <>Sign In</>}
         </button>
+        <p className="text-sm self-center mt-3 text-slate-500">Demo: demo@gmail.com {" "} Demo123!</p>
         <hr className="my-3" />
         <Link
           href="/registration/signup"

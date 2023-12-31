@@ -3,9 +3,9 @@ services:
   backend:
     build: ./backend
     environment:
-      - AWS_REGION=${AWS_REGION}
-      - AWS_USER_POOL_ID=${AWS_USER_POOL_ID}
-      - AWS_APP_CLIENT_ID=${AWS_APP_CLIENT_ID}
+      - SUPABASE_URL={SUPABASE_URL}
+      - SUPABASE_ANON_KEY={SUPABASE_ANON_KEY}
+      - DB_URL={DB_URL}
       - FRONTEND_URL=${FRONTEND_URL}
       - PORT=8000
     ports:
@@ -16,9 +16,9 @@ services:
   frontend:
     build: ./frontend
     environment:
-      - NEXT_PUBLIC_AWS_REGION=${AWS_REGION}
-      - NEXT_PUBLIC_AWS_USER_POOL_ID=${AWS_USER_POOL_ID}
-      - NEXT_PUBLIC_AWS_APP_CLIENT_ID=${AWS_APP_CLIENT_ID}
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_SUPABASE_BUCKET_NAME=${SUPABASE_BUCKET_NAME}
       - NEXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
     ports:
       - "3000:3000"
