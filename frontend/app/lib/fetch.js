@@ -1,6 +1,6 @@
 export async function fetchTimeout(resource, options = {}) {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 9000);
+  const id = setTimeout(() => controller.abort(), 8000);
 
   const response = await fetch(resource, {
     ...options,
