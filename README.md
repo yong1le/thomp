@@ -14,4 +14,6 @@ This project was a learning opportunity for
 
 ---
 
-The demo is avaiable at http://thomp.vercel.app. The backend may take a while to spin up from a cold start.
+The demo is available at http://thomp.vercel.app.
+The backend is hosted on the free tier of [render](render.com). It may take
+a while to spin up from a cold start.
