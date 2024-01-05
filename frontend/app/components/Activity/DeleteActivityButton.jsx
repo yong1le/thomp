@@ -42,7 +42,7 @@ const DeleteActivityButton = ({ id }) => {
       </button>
 
       {confirmationVisible && (
-        <Popup title="Confirm Delete?" closemunction={setConfirmationVisible}>
+        <Popup title="Confirm Delete?" closeFunction={setConfirmationVisible}>
           <div className="mt-2 flex h-full flex-col gap-16 px-10">
             <p className="text-xl">
               Are you sure you want to delete this activity?
