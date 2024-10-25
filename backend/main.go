@@ -26,6 +26,6 @@ func main() {
 	server := api.NewServer(h)
 	err = server.Run()
 	if err != nil {
-		log.Fatal("Server failed to run: ", err)
+		log.Fatal("Failed to run server", err)
 	}
 }
