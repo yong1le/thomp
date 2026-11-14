@@ -12,8 +12,6 @@ This project was a learning opportunity for
 * Postgresql functions, triggers, and cron jobs
 * Server side rendering
 
-The demo is available at http://thomp.vercel.app.
-
 ## Project Architecture
 
 ![image](https://github.com/yong1le/thomp/assets/76537485/c132037f-2a9d-469b-b59f-8c4b6a4134b7)
